@@ -166,7 +166,7 @@ module register (
 );
 
     always_ff @(posedge clk) begin
-        if (!rst_n) q <= 31'd0;
+        if (!rst_n) q <= 32'd0;
         else if (enable) q <= d_in;
     end
 

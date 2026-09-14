@@ -1,13 +1,19 @@
+`timescale 1ns / 1ps
 // cpu + rom
 module rv32i_top (
-    input  logic clk,
-    input  logic rst_n
+    input logic clk,
+    input logic rst,
+    input logic [11:0] sw,
+    output logic [11:0] led
 );
 
-    logic [31:0] instr_code, instr_addr;
+    logic [31:0] instr_code, instr_code_reg, instr_addr;
     logic [31:0] bus_addr, bus_wdata, bus_rdata;
     logic [2:0] d_inst_type;
     logic bus_we, ready, transfer;
+    logic rst_n;
+
+    assign rst_n = ~rst;
 
     // apb interface
     // 0: RAM
@@ -22,38 +28,67 @@ module rv32i_top (
     logic [31:0] p_wdata;
     logic p_sel0, p_sel1, p_sel2, p_sel3, p_sel4, p_sel5, p_sel6;
     logic p_ready0, p_ready1, p_ready2, p_ready3, p_ready4, p_ready5, p_ready6;
-    logic [31:0] p_rdata0, p_rdata1, p_rdata2, p_rdata3, p_rdata4, p_rdata5, p_rdata6;
-
+    logic [31:0]
+        p_rdata0, p_rdata1, p_rdata2, p_rdata3, p_rdata4, p_rdata5, p_rdata6;
+    logic [7:0] gpi_control, gpi_data;
 
     instruction_rom U_ROM (
+        .instr_code(instr_code_reg),
         .*
-    );
-    
-    rv32i_cpu U_CPU (
-        .* 
     );
 
-    apb_requester U_APB_REQ ( 
+    // fetch to decode
+    register FE2DEC_INST (
+        .clk(clk),
+        .rst_n(rst_n),
+        .enable(1'b1),
+        .d_in(instr_code_reg),
+        .q(instr_code)
+    );
+
+    rv32i_cpu U_CPU (
+        .instr_code(instr_code_reg),
         .*
     );
+
+    apb_requester U_APB_REQ (.*);
 
     apb_bram U_APB_RAM_COM (
-        .p_sel(p_sel0),
+        .p_sel  (p_sel0),
         .p_rdata(p_rdata0),
         .p_ready(p_ready0),
         .*
     );
-    
+
+    gpi_ctr U_GPI_CNTL (
+        .p_sel  (p_sel1),
+        .p_rdata(p_rdata1),
+        .p_ready(p_ready1),
+        .*
+    );
+
+    gpi_ip U_GPI_IP (
+        .switch_data(sw[7:0]),
+        .*
+    );
+
+    gpo_ctr U_GPO_CNTL (
+        .p_sel(p_sel2),
+        .gpo_data(led),
+        .p_ready(p_ready2),
+        .*
+    );
+
 endmodule
 
 // cpu
 module rv32i_cpu (
-    input  logic clk,
-    input  logic rst_n,
-    input  logic ready, // from apb
-    input  logic [31:0] instr_code,
-    input  logic [31:0] bus_rdata,
-    output logic transfer, // to apb
+    input logic clk,
+    input logic rst_n,
+    input logic ready,  // from apb
+    input logic [31:0] instr_code,
+    input logic [31:0] bus_rdata,
+    output logic transfer,  // to apb
     output logic [31:0] instr_addr,
     output logic [31:0] bus_addr,
     output logic [31:0] bus_wdata,
@@ -65,12 +100,8 @@ module rv32i_cpu (
     logic [2:0] rf_src_sel;
     logic [2:0] jump;
 
-    control_unit U_CNTL_UNIT (
-        .*
-    );
-    
-    datapath U_DATAPATH (
-        .*
-    ); 
+    control_unit U_CNTL_UNIT (.*);
+
+    datapath U_DATAPATH (.*);
 
 endmodule

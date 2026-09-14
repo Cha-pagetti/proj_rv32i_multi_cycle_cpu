@@ -1,4 +1,4 @@
-
+`timescale 1ns / 1ps
 
 module apb_requester(
     input  logic clk,
@@ -57,7 +57,7 @@ module apb_requester(
     assign ready = ready_sel[0];
 
     address_decoder U_P_ADDR_DEC (
-        .addr(bus_addr),
+        .addr(waddr_reg),
         .psel(selected_p)
     );
 
@@ -85,7 +85,7 @@ module apb_requester(
         .mux_out(bus_rdata)
     );
 
-    assign p_addr = waddr_reg;
+    assign p_addr = {4'b0, waddr_reg[27:0]};
     assign p_wdata = wdata_reg;
     assign p_write = bus_we;
 
@@ -118,7 +118,7 @@ module apb_requester(
         case (c_state)
             IDLE: begin
                 wdata_next = bus_wdata;
-                waddr_next = {4'b0000, bus_addr[27:0]};
+                waddr_next = bus_addr;
                 if (transfer) n_state = SETUP;
             end
             SETUP: begin

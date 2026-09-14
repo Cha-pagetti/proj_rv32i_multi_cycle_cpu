@@ -12,10 +12,10 @@ module apb_bram (
 
     logic [31:0] data_ram [0:127];
 
-    logic [29:0] ram_addr;
+    logic [6:0] ram_addr;
     logic [1:0] byte_addr;
 
-    assign ram_addr = p_addr[31:2];
+    assign ram_addr = p_addr[8:2];
     assign byte_addr = p_addr[1:0];
     assign p_ready = p_enable & p_sel;
 
@@ -43,7 +43,7 @@ module apb_bram (
     
     always_comb begin
         p_rdata = 32'dz;
-        if (p_ready) begin
+        if (p_sel) begin
             case (d_inst_type)
                 3'b000: begin
                     // LB: load 1 byte (sign extends)
