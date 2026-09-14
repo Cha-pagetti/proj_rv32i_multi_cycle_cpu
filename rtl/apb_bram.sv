@@ -12,10 +12,10 @@ module apb_bram (
 
     logic [31:0] data_ram [0:127];
 
-    logic [6:0] ram_addr;
+    logic [29:0] ram_addr;
     logic [1:0] byte_addr;
 
-    assign ram_addr = p_addr[8:2];
+    assign ram_addr = p_addr[31:2];
     assign byte_addr = p_addr[1:0];
     assign p_ready = p_enable & p_sel;
 

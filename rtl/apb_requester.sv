@@ -50,6 +50,11 @@ module apb_requester(
 
     apb_state_e c_state, n_state;
     logic [3:0] selected_p;
+    logic [31:0] ready_sel;
+    logic [31:0] wdata_reg, wdata_next;
+    logic [31:0] waddr_reg, waddr_next;
+
+    assign ready = ready_sel[0];
 
     address_decoder U_P_ADDR_DEC (
         .addr(bus_addr),
@@ -58,14 +63,14 @@ module apb_requester(
 
     apb_mux U_MUX_P_READY (
         .mux_sel(selected_p),
-        .in0(p_ready0),
-        .in1(p_ready1),
-        .in2(p_ready2),
-        .in3(p_ready3),
-        .in4(p_ready4),
-        .in5(p_ready5),
-        .in6(p_ready6),
-        .mux_out(ready)
+        .in0({31'b0, p_ready0}),
+        .in1({31'b0, p_ready1}),
+        .in2({31'b0, p_ready2}),
+        .in3({31'b0, p_ready3}),
+        .in4({31'b0, p_ready4}),
+        .in5({31'b0, p_ready5}),
+        .in6({31'b0, p_ready6}),
+        .mux_out(ready_sel)
     );
 
     apb_mux U_MUX_P_RDATA (
@@ -80,13 +85,21 @@ module apb_requester(
         .mux_out(bus_rdata)
     );
 
-    assign p_addr = {4'b0000, bus_addr[27:0]};
-    assign p_wdata = bus_wdata;
+    assign p_addr = waddr_reg;
+    assign p_wdata = wdata_reg;
     assign p_write = bus_we;
 
     always_ff @(posedge clk) begin
-        if (!rst_n) c_state <= IDLE;
-        else c_state <= n_state;
+        if (!rst_n) begin
+            c_state <= IDLE;
+            wdata_reg <= 32'b0;
+            waddr_reg <= 32'b0;
+        end
+        else begin
+            c_state <= n_state;
+            wdata_reg <= wdata_next;
+            waddr_reg <= waddr_next;
+        end
     end
 
     always_comb begin
@@ -99,9 +112,13 @@ module apb_requester(
         p_sel5 = 0;
         p_sel6 = 0;
         p_enable = 0;
+        wdata_next = wdata_reg;
+        waddr_next = waddr_reg;
 
         case (c_state)
             IDLE: begin
+                wdata_next = bus_wdata;
+                waddr_next = {4'b0000, bus_addr[27:0]};
                 if (transfer) n_state = SETUP;
             end
             SETUP: begin
