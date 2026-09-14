@@ -1,4 +1,4 @@
-`timescale 1ns / 1ps
+
 module control_unit
 
     import rv32i_pkg::*;
@@ -50,7 +50,6 @@ module control_unit
         jump = 3'b000;
         pc_en = 1'b0;
         transfer = 1'b0;
-        n_state = c_state;
 
         case (c_state)
             FETCH: begin
@@ -144,6 +143,8 @@ module control_unit
             MEMORY: begin
                 case (opcode)
                     OP_STYPE: begin
+                        alu_src_sel = 1'b1;     // 수정
+                        alu_control = 4'b0_000;
                         transfer = 1'b1;
                         bus_we = 1'b1;
                         d_inst_type = funct3;
@@ -153,6 +154,8 @@ module control_unit
                         end
                     end
                     OP_ILTYPE: begin
+                        alu_src_sel = 1'b1;     // 수정
+                        alu_control = 4'b0_000;
                         transfer = 1'b1;
                         d_inst_type = funct3;
                         n_state = WB;
@@ -160,9 +163,12 @@ module control_unit
                 endcase
             end
             WB: begin
+                alu_src_sel = 1'b1;             // 수정
+                alu_control = 4'b0_000;
+                transfer = 1'b1;                // 트랜잭션 유지
+                d_inst_type = funct3;          
                 rf_we = 1'b1;
                 rf_src_sel = 3'b001;
-                d_inst_type = funct3;
                 if (ready) begin
                     n_state = FETCH;
                     pc_en = 1'b1;
