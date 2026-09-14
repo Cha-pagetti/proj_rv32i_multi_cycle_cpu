@@ -62,7 +62,7 @@ module instruction_rom (
     
     initial begin
         // read mem file -> instr_rom
-        $readmemh("./rom_code_ram_apb.mem", instr_rom, 0, 31); // read line 0 ~ 18
+        $readmemh("./rom_code_gpio.mem", instr_rom, 0, 31); // read line 0 ~ 18
     end
 
     // remain addr calc (pc = pc + 4)
