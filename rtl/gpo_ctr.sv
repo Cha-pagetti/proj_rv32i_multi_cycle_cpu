@@ -37,4 +37,6 @@ module gpo_ctr(
         end
     end
 
+    assign gpo_data = output_data;
+
 endmodule

@@ -50,6 +50,7 @@ module control_unit
         jump = 3'b000;
         pc_en = 1'b0;
         transfer = 1'b0;
+        n_state = c_state;
 
         case (c_state)
             FETCH: begin
