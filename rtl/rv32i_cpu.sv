@@ -32,9 +32,10 @@ module rv32i_top (
     logic [31:0]
         p_rdata0, p_rdata1, p_rdata2, p_rdata3, p_rdata4, p_rdata5, p_rdata6;
     logic [7:0] gpi_control, gpi_data;
+    logic fe2dec_en;
 
     instruction_rom U_ROM (
-        .instr_code(instr_code_reg),
+        .instr_code(instr_code),
         .*
     );
 
@@ -46,13 +47,14 @@ module rv32i_top (
     register FE2DEC_INST (
         .clk(clk),
         .rst_n(rst_n),
-        .enable(1'b1),
-        .d_in(instr_code_reg),
-        .q(instr_code)
+        .enable(fe2dec_en),
+        .d_in(instr_code),
+        .q(instr_code_reg)
     );
 
     rv32i_cpu U_CPU (
         .instr_code(instr_code_reg),
+        .fe2dec_en(fe2dec_en),
         .*
     );
 
@@ -102,12 +104,14 @@ module rv32i_cpu (
     output logic [31:0] bus_addr,
     output logic [31:0] bus_wdata,
     output logic bus_we,
-    output logic [2:0] d_inst_type
+    output logic [2:0] d_inst_type,
+    output logic fe2dec_en
 );
     logic [3:0] alu_control;
     logic rf_we, alu_src_sel, pc_en;
     logic [2:0] rf_src_sel;
     logic [2:0] jump;
+    logic dec2exe_en, exe2mem_en, mem2wb_en;
 
     control_unit U_CNTL_UNIT (.*);
 

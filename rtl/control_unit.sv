@@ -15,6 +15,10 @@ module control_unit
     output logic [2:0] rf_src_sel,        // reg file wdata src 0 -> alu / 1 -> mem / 2 -> lui (big imm) / 3 -> auipc (pc, long jump destination) / 4 -> jal (pc, come back destination)
     output logic [2:0] jump,        // jump (one hot) / 01: conditional branch (b type), jal (pc += imm) / 10: jalr (pc = rs1 + imm)
     output logic pc_en,             // fetch
+    output logic fe2dec_en,
+    output logic dec2exe_en,
+    output logic exe2mem_en,
+    output logic mem2wb_en,
     output logic transfer           // to APB transfer 
 );
     typedef enum logic [2:0] {
@@ -49,6 +53,10 @@ module control_unit
         rf_src_sel = 3'b000;
         jump = 3'b000;
         pc_en = 1'b0;
+        fe2dec_en = 1'b0;
+        dec2exe_en = 1'b0;
+        exe2mem_en = 1'b0;
+        mem2wb_en = 1'b0;
         transfer = 1'b0;
         n_state = c_state;
 
@@ -56,11 +64,14 @@ module control_unit
             FETCH: begin
                 //pc_en = 1'b1;
                 n_state = DECODE;
+                fe2dec_en = 1'b1;
             end
             DECODE: begin
                 n_state = EXECUTE;
+                dec2exe_en = 1'b1;
             end
             EXECUTE: begin
+                exe2mem_en = 1'b1;
                 case (opcode)
                     // opcode
             
@@ -159,21 +170,22 @@ module control_unit
                         alu_control = 4'b0_000;
                         transfer = 1'b1;
                         d_inst_type = funct3;
-                        n_state = WB;
+                        // APB ready가 뜬(=bus_rdata 유효) 사이클에서만
+                        // MEM2WB 레지스터에 로드 데이터를 latch
+                        if (ready) begin
+                            mem2wb_en = 1'b1;
+                            n_state = WB;
+                        end
                     end
                 endcase
             end
             WB: begin
-                alu_src_sel = 1'b1;             // 수정
-                alu_control = 4'b0_000;
-                transfer = 1'b1;                // 트랜잭션 유지
-                d_inst_type = funct3;          
+                // APB 트랜잭션은 MEMORY에서 이미 완료됐고
+                // mem_bus_rdata에 유효한 로드 데이터가 들어있음
                 rf_we = 1'b1;
                 rf_src_sel = 3'b001;
-                if (ready) begin
-                    n_state = FETCH;
-                    pc_en = 1'b1;
-                end
+                n_state = FETCH;
+                pc_en = 1'b1;
             end
         endcase
     end
