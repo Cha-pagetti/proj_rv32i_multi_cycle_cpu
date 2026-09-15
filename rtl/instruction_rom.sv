@@ -62,7 +62,7 @@ module instruction_rom (
     
     initial begin
         // read mem file -> instr_rom
-        $readmemh("C:/Users/JMT/Documents/GitHub/proj_rv32i_multi_cycle_cpu/rtl/rom_code_gpio.mem", instr_rom, 0, 27); // read line 0 ~ 18
+        $readmemh("rom_code_gpio.mem", instr_rom, 0, 27); // read line 0 ~ 18
     end
 
     // remain addr calc (pc = pc + 4)
