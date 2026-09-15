@@ -8,6 +8,9 @@ module datapath (
     input  logic rf_we,
     input  logic alu_src_sel,
     input  logic pc_en,
+    input  logic dec2exe_en,
+    input  logic exe2mem_en,
+    input  logic mem2wb_en,
     input  logic [2:0] jump,
     input  logic [2:0] rf_src_sel,
     input  logic [3:0] alu_control,
@@ -36,7 +39,7 @@ module datapath (
     register MEM2WB_BUS_RDATA (
         .clk(clk),
         .rst_n(rst_n),
-        .enable(1'b1),
+        .enable(mem2wb_en),
         .d_in(bus_rdata),
         .q(mem_bus_rdata)
     );
@@ -65,7 +68,7 @@ module datapath (
     register DE2EXE_RS1 (
         .clk(clk),
         .rst_n(rst_n),
-        .enable(1'b1),
+        .enable(dec2exe_en),
         .d_in(w_rf_rdata0),
         .q(dec_rs1)
     );
@@ -73,7 +76,7 @@ module datapath (
     register DE2EXE_RS2 (
         .clk(clk),
         .rst_n(rst_n),
-        .enable(1'b1),
+        .enable(dec2exe_en),
         .d_in(w_rf_rdata1),
         .q(dec_rs2)
     );
@@ -81,7 +84,7 @@ module datapath (
     register DE2EXE_IMM (
         .clk(clk),
         .rst_n(rst_n),
-        .enable(1'b1),
+        .enable(dec2exe_en),
         .d_in(imm_extend),
         .q(dec_imm)
     );
@@ -131,7 +134,7 @@ module datapath (
     register EXE2MEM_ALU (
         .clk(clk),
         .rst_n(rst_n),
-        .enable(1'b1),
+        .enable(exe2mem_en),
         .d_in(alu_result),
         .q(exe_alu)
     );
@@ -139,7 +142,7 @@ module datapath (
     register EXE2MEM_RS2 (
         .clk(clk),
         .rst_n(rst_n),
-        .enable(1'b1),
+        .enable(exe2mem_en),
         .d_in(dec_rs2),
         .q(exe_rs2)
     );
