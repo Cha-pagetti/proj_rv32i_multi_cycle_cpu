@@ -1,6 +1,6 @@
 
-`include "define.svh"
-//`define SIMULATION
+`include "./rtl/define.svh"
+`define SIMULATION
 
 module datapath (
     input  logic clk,
@@ -16,7 +16,7 @@ module datapath (
     output logic [31:0] instr_addr,
     output logic [31:0] bus_addr,
     output logic [31:0] bus_wdata
-);  
+);
 
     logic [31:0] alu_result, w_rf_rdata0, w_rf_rdata1;
     logic [31:0] dec_rs1, dec_rs2, dec_imm;
@@ -27,7 +27,7 @@ module datapath (
 
     logic [31:0] mem_bus_rdata;
     logic b_taken;
-  
+
     assign bus_addr = exe_alu;
     assign bus_wdata = exe_rs2;
     assign instr_addr = exe_pc_next;
@@ -85,7 +85,7 @@ module datapath (
         .d_in(imm_extend),
         .q(dec_imm)
     );
-    
+
     // execute
 
     mux_2x1 U_ALU_SRC_MUX (
@@ -94,7 +94,7 @@ module datapath (
         .in1(dec_imm),
         .mux_out(alu_src_mux_out)
     );
-    
+
     alu U_ALU (
         .alu_control(alu_control),
         .rs1(dec_rs1),
@@ -153,7 +153,7 @@ module datapath (
         .d_in(pc_next),
         .q(exe_pc_next)
     );
-    
+
 
 endmodule
 
@@ -166,7 +166,7 @@ module register (
 );
 
     always_ff @(posedge clk) begin
-        if (!rst_n) q <= 32'd0;
+        if (!rst_n) q <= 31'd0;
         else if (enable) q <= d_in;
     end
 
@@ -207,7 +207,7 @@ module reg_file (
 
     assign rdata0 = (ra0 == 0) ? 32'd0 : register_file[ra0];
     assign rdata1 = (ra1 == 0) ? 32'd0 : register_file[ra1];
-  
+
 endmodule
 
 module alu (
@@ -227,9 +227,9 @@ module alu (
             `XOR : alu_result = rs1 ^ rs2; // xor
             `OR  : alu_result = rs1 | rs2; // or
             `AND : alu_result = rs1 & rs2; // and
-            `SLL : alu_result = rs1 << rs2; // sll
-            `SRL : alu_result = rs1 >> rs2; // srl
-            `SRA : alu_result = $signed(rs1) >>> rs2; // sra
+            `SLL : alu_result = rs1 << rs2[4:0]; // sll
+            `SRL : alu_result = rs1 >> rs2[4:0]; // srl
+            `SRA : alu_result = $signed(rs1) >>> rs2[4:0]; // sra
             `SLT : alu_result = ($signed(rs1) < $signed(rs2)) ? 32'd1 : 32'd0; // slt
             `SLTU: alu_result = (rs1 < rs2) ? 32'd1 : 32'd0; // sltu
        endcase
@@ -256,7 +256,7 @@ module mux_2x1 (
     input  logic [31:0] in1,
     output logic [31:0] mux_out
 );
-    
+
     assign mux_out = (mux_sel) ? in1 : in0;
 
 endmodule
@@ -268,7 +268,7 @@ module mux_3x1_one_hot (
     input  logic [31:0] in2,
     output logic [31:0] mux_out
 );
-    
+
     always_comb begin
         mux_out = in0;
         case (mux_sel)
@@ -296,7 +296,7 @@ module mux_5x1 (
             3'b001: mux_out = in1;
             3'b010: mux_out = in2;
             3'b011: mux_out = in3;
-            3'b100: mux_out = in4; 
+            3'b100: mux_out = in4;
         endcase
     end
 
@@ -320,29 +320,35 @@ import rv32i_pkg::*;
         imm_extend = 32'd0;
         case (opcode)
             // s type: 12bit -> 32bit
-            OP_STYPE : imm_extend = { 
-                {20{instr_code[31]}}, 
-                instr_code[31:25], 
+            OP_STYPE : imm_extend = {
+                {20{instr_code[31]}},
+                instr_code[31:25],
                 instr_code[11:7]
             };
 
             // i type: 12bit -> 32bit
-            OP_ITYPE : imm_extend = { 
-                {20{instr_code[31]}}, 
-                ((instr_code[14:12] == 3'b101) || (instr_code[14:12] ==3'b001)) 
+           // OP_ITYPE : imm_extend = {
+           //     {20{instr_code[31]}},
+           //     ((instr_code[14:12] == 3'b101) || (instr_code[14:12] ==3'b001))
+           //         // srli, srai, slli -> lower 5 bit shamt (imm)
+           //         ? { {6{instr_code[24]}} ,instr_code[24:20]}
+           //         // addi, slti, sltiu, xori, ori, andi, slli, stli, srai -> 11bit imm
+           //         : instr_code[31:20]
+           // };
+						OP_ITYPE : imm_extend =
+                ((instr_code[14:12] == 3'b101) || (instr_code[14:12] ==3'b001))
                     // srli, srai, slli -> lower 5 bit shamt (imm)
-                    ? { {6{instr_code[24]}} ,instr_code[24:20]} 
+                    ? {27'b0, instr_code[24:20]}
+										:	{{20{instr_code[31]}}, instr_code[31:20]};
                     // addi, slti, sltiu, xori, ori, andi, slli, stli, srai -> 11bit imm
-                    : instr_code[31:20]
-            };
 
             // il type: 12bit -> 32bit
             OP_ILTYPE : imm_extend = {
                 {20{instr_code[31]}},
                 instr_code[31:20]
             };
-            
-            // b type: 12 bit -> 32bit 
+
+            // b type: 12 bit -> 32bit
             OP_BTYPE : imm_extend = {
                 {19{instr_code[31]}},
                 instr_code[31],
@@ -351,13 +357,13 @@ import rv32i_pkg::*;
                 instr_code[11:8],
                 1'b0 // last bit -> 0, 2 byte adress
             };
-            
+
             // u type: 20 bit -> 32 bit (zero padding)
             OP_UTYPE_LUI, OP_UTYPE_AUIPC : imm_extend = {
                 instr_code[31:12],
                 12'd0
             };
-            
+
             // j type (jal): 20 -> 32bit
             OP_JTYPE : imm_extend = {
                 {11{instr_code[31]}},
