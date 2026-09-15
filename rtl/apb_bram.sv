@@ -43,7 +43,7 @@ module apb_bram (
     
     always_comb begin
         p_rdata = 32'dz;
-        if (p_ready) begin
+        if (p_sel) begin
             case (d_inst_type)
                 3'b000: begin
                     // LB: load 1 byte (sign extends)
@@ -72,7 +72,7 @@ module apb_bram (
                 end
                 3'b101: begin
                     // LHU: load 2 byte (zero extends, unsigned)
-                    p_rdata <= {
+                    p_rdata = {
                         16'b0, data_ram[ram_addr][byte_addr[1]*16 +: 16]
                     };
                 end
