@@ -1,6 +1,6 @@
 
-`include "./rtl/define.svh"
-`define SIMULATION
+`include "define.svh"
+//`define SIMULATION
 
 module datapath (
     input  logic clk,
