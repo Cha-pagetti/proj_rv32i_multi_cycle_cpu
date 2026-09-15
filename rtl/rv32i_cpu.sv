@@ -33,32 +33,32 @@ module rv32i_top (
         p_rdata0, p_rdata1, p_rdata2, p_rdata3, p_rdata4, p_rdata5, p_rdata6;
     logic [7:0] gpi_control, gpi_data;
 
-    // instruction_rom U_ROM (
-    //     .instr_code(instr_code_reg),
-    //     .*
-    // );
-
     instruction_rom U_ROM (
+        .instr_code(instr_code_reg),
         .*
     );
 
-    // // fetch to decode
-    // register FE2DEC_INST (
-    //     .clk(clk),
-    //     .rst_n(rst_n),
-    //     .enable(1'b1),
-    //     .d_in(instr_code_reg),
-    //     .q(instr_code)
-    // );
-
-    // rv32i_cpu U_CPU (
-    //     .instr_code(instr_code_reg),
+    // instruction_rom U_ROM (
     //     .*
     // );
+
+    // fetch to decode
+    register FE2DEC_INST (
+        .clk(clk),
+        .rst_n(rst_n),
+        .enable(1'b1),
+        .d_in(instr_code_reg),
+        .q(instr_code)
+    );
 
     rv32i_cpu U_CPU (
+        .instr_code(instr_code_reg),
         .*
     );
+
+    // rv32i_cpu U_CPU (
+    //     .*
+    // );
 
     apb_requester U_APB_REQ (.*);
 
@@ -90,55 +90,55 @@ module rv32i_top (
 
 endmodule
 
-// // cpu
-// module rv32i_cpu (
-//     input logic clk,
-//     input logic rst_n,
-//     input logic ready,  // from apb
-//     input logic [31:0] instr_code,
-//     input logic [31:0] bus_rdata,
-//     output logic transfer,  // to apb
-//     output logic [31:0] instr_addr,
-//     output logic [31:0] bus_addr,
-//     output logic [31:0] bus_wdata,
-//     output logic bus_we,
-//     output logic [2:0] d_inst_type
-// );
-//     logic [3:0] alu_control;
-//     logic rf_we, alu_src_sel, pc_en;
-//     logic [2:0] rf_src_sel;
-//     logic [2:0] jump;
-
-//     control_unit U_CNTL_UNIT (.*);
-
-//     datapath U_DATAPATH (.*);
-
-// endmodule
-
 // cpu
 module rv32i_cpu (
-    input  logic clk,
-    input  logic rst_n,
-    input  logic [31:0] instr_code,
-    input  logic [31:0] bus_rdata,
+    input logic clk,
+    input logic rst_n,
+    input logic ready,  // from apb
+    input logic [31:0] instr_code,
+    input logic [31:0] bus_rdata,
+    output logic transfer,  // to apb
     output logic [31:0] instr_addr,
     output logic [31:0] bus_addr,
     output logic [31:0] bus_wdata,
-    output logic transfer,
     output logic bus_we,
     output logic [2:0] d_inst_type
 );
     logic [3:0] alu_control;
-    logic rf_we, alu_src_sel;
+    logic rf_we, alu_src_sel, pc_en;
     logic [2:0] rf_src_sel;
-    logic [1:0] jump;
+    logic [2:0] jump;
 
-    single_control_unit U_CNTL_UNIT (
-        .*
-    );
-    
-    single_datapath U_DATAPATH (
-        .*
-    ); 
+    control_unit U_CNTL_UNIT (.*);
+
+    datapath U_DATAPATH (.*);
 
 endmodule
+
+// cpu
+// module rv32i_cpu (
+//     input  logic clk,
+//     input  logic rst_n,
+//     input  logic [31:0] instr_code,
+//     input  logic [31:0] bus_rdata,
+//     output logic [31:0] instr_addr,
+//     output logic [31:0] bus_addr,
+//     output logic [31:0] bus_wdata,
+//     output logic transfer,
+//     output logic bus_we,
+//     output logic [2:0] d_inst_type
+// );
+//     logic [3:0] alu_control;
+//     logic rf_we, alu_src_sel;
+//     logic [2:0] rf_src_sel;
+//     logic [1:0] jump;
+
+//     single_control_unit U_CNTL_UNIT (
+//         .*
+//     );
+    
+//     single_datapath U_DATAPATH (
+//         .*
+//     ); 
+
+// endmodule
