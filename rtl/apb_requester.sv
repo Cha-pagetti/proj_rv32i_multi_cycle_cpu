@@ -1,4 +1,4 @@
-`timescale 1ns / 1ps
+//`timescale 1ns / 1ps
 
 module apb_requester(
     input  logic clk,
@@ -121,6 +121,7 @@ module apb_requester(
                 waddr_next = bus_addr;
                 if (transfer) n_state = SETUP;
             end
+
             SETUP: begin
                 case (selected_p)
                     4'h0: p_sel0 = 1'b1;
@@ -133,6 +134,7 @@ module apb_requester(
                 endcase
                 n_state = ACCESS;
             end
+
             ACCESS: begin
                 case (selected_p)
                     4'h0: p_sel0 = 1'b1;
@@ -153,7 +155,7 @@ endmodule
 
 
 module apb_mux (
-    input  logic [3:0]  mux_sel,
+    input  logic [ 3:0] mux_sel,
     input  logic [31:0] in0,
     input  logic [31:0] in1,
     input  logic [31:0] in2,

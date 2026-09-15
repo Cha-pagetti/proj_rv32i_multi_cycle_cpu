@@ -11,8 +11,8 @@ module apb_ram #(
     input  logic        pEnable,
     input  logic        pSel,
     output logic [31:0] pRdata,
-    output logic        pReady,
-    output logic        pSlverr
+    output logic        pReady
+    // output logic        pSlverr
 
 );
     
@@ -45,17 +45,19 @@ module apb_ram #(
                     else begin
                         // High 16bit Write
                         data_ram[ram_addr][31:16] <= pWdata[15:0];
+                    end
                 end
 
                 3'b010: begin
                     // SW : Write 4byte
-                    data_ram[ram_addr] <= pWdata
+                    data_ram[ram_addr] <= pWdata;
                 end
             endcase
         end
     end
 
 
+    // Read phase
     always_comb begin
         pRdata = 32'dz;
         if (pSel) begin
@@ -64,7 +66,7 @@ module apb_ram #(
                     // LB: Load 1byte (sign extends)
                     pRdata = {
                         // sign extention
-                        {24{data_ram[ram_addr][byte_addr*8 +: 7]}}, 
+                        {24{data_ram[ram_addr][byte_addr*8 + 7]}}, 
                         data_ram[ram_addr][byte_addr*8 +: 8] 
                     };
                 end
@@ -72,8 +74,8 @@ module apb_ram #(
                 3'b001: begin
                     // LH : Load 2byte (sign extention)
                     pRdata = {
-                        {16{data_ram[ram_addr][byte_addr*16 +:15]}},
-                        data_ram[ram_addr][byte_addr*16 +: 16]
+                        {16{data_ram[ram_addr][byte_addr[1]*16 + 15]}},
+                        data_ram[ram_addr][byte_addr[1]*16 +: 16]
                     };
                 end
 
@@ -84,7 +86,7 @@ module apb_ram #(
 
                 3'b100: begin
                     // LBU: Load 1byte (zero extends, unsigned)
-                    pRdata = { 16'b0, data_ram[ram_addr][byte_addr[1]*16 +: 16] };
+                    pRdata = { 24'b0, data_ram[ram_addr][byte_addr*8 +: 8] };
                     end
             endcase
         end
