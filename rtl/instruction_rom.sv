@@ -60,9 +60,9 @@ module instruction_rom (
         // JALR
     //end
     
-    initial begin
-        // read mem file -> instr_rom
-        $readmemh("rom_code_gpio.mem", instr_rom, 0, 120); // read line 0 ~ 18
+initial begin
+        // 기존: $readmemh("rom_code_gpio.mem", instr_rom, 0, 120);
+        $readmemh("rom_code_apb_ram.mem", instr_rom); 
     end
 
     // remain addr calc (pc = pc + 4)
